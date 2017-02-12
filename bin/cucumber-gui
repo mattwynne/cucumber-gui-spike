@@ -20,7 +20,7 @@ function resolve(module, resolver) {
 
 function run(electron) {
   var args = process.argv.slice(2)
-  args.unshift(path.resolve(path.join(__dirname, '../index.js')))
+  args.unshift(path.resolve(path.join(__dirname, '../main.js')))
 
   var child = spawn(electron, args)
   child.stdout.pipe(process.stdout)

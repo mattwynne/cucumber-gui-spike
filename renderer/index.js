@@ -16,6 +16,16 @@ function exitWithCode(code) {
   if (!options.electronDebug) electron.remote.process.exit(code)
 }
 
-const testCases = document.createElement('ul')
-testCases.innerHTML = "<li>features/foo.feature:1</li>"
-main.appendChild(testCases)
+const { ipcRenderer } = require('electron')
+ipcRenderer.on('test-run-started', (event, message) => {
+  const testCases = document.createElement('ul')
+  testCases.innerHTML = message['testCases'].map((file) => 
+    `<li x-test-case-location="${file}">${file}</li>`).join('')
+  main.appendChild(testCases)
+})
+
+ipcRenderer.on('test-case-finished', (event, message) => {
+  const li = document.querySelector(`[x-test-case-location='${message['location']}']`)
+  li.className = message['result']
+})
+

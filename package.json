@@ -2,7 +2,7 @@
   "name": "cucumber-gui",
   "version": "1.0.0",
   "description": "Graphical User Interface for Cucumber",
-  "main": "index.js",
+  "main": "main.js",
   "bin": {
     "cucumber-gui": "./bin/cucumber-gui.js"
   },
