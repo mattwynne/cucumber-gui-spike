@@ -11,21 +11,9 @@ const options = new Options(process.argv)
 let win
 
 app.on('ready', () => {
-  win = new BrowserWindow({
-    height: 800,
-    width: 600,
-    focusable: true,
-    show: true,
-    webPreferences: { webSecurity: false }
-  })
-
-  const indexPath = url.format({
-    pathname: path.join(__dirname, 'renderer', 'index.html'),
-    protocol: 'file:',
-    slashes: true
-  })
+  win = new BrowserWindow({ height: 800, width: 600 })
+  const indexPath = `file://${__dirname}/renderer/index.html`
   win.loadURL(indexPath)
-  win.webContents.openDevTools()
 
   win.on('closed', () => { win = null })
 
@@ -33,7 +21,7 @@ app.on('ready', () => {
     const server = net.createServer((socket) => {
       readline.createInterface({ input: socket }).on('line', (line) => {
         const message = JSON.parse(line)
-        console.log("received", message)
+        if (options.debug) console.log(message)
         win.webContents.send(message['type'], message)
       })
     })
