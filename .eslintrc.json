@@ -14,6 +14,7 @@
     "indent": ["error", 2],
     "key-spacing": ["error"],
     "linebreak-style": ["error", "unix"],
+    "no-console": ["off"],
     "no-multi-spaces": ["error"],
     "no-trailing-spaces": ["error"],
     "no-unused-vars": ["error"],

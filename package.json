@@ -4,18 +4,24 @@
   "description": "Graphical User Interface for Cucumber",
   "main": "main.js",
   "bin": {
-    "cucumber-gui": "./bin/cucumber-gui.js"
+    "cucumber-gui": "./bin/cucumber-gui"
   },
   "scripts": {
     "test": "npm run eslint",
-    "eslint": "eslint '**/*.js' --ignore 'node_modules/**/*.js'"
+    "eslint": "eslint '**/*.js' --ignore 'node_modules/**/*.js'",
+    "start": "./bin/cucumber-gui --port 9000"
   },
   "author": "Matt Wynne <matt@cucumber.io>",
   "license": "MIT",
   "dependencies": {
+    "bootstrap": "3",
+    "chart.js": "^2.5.0",
     "commander": "2.9.0",
     "electron": "1.4.14",
-    "electron-window": "0.8.1"
+    "electron-reload": "^1.1.0",
+    "electron-window": "0.8.1",
+    "jquery": "^3.1.1",
+    "vis": "^4.18.1"
   },
   "repository": {
     "type": "git",

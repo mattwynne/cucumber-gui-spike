@@ -1,14 +1,18 @@
-const path = require('path')
-const url = require('url')
 const net = require('net')
 const readline = require('readline')
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow } = require('electron')
 app.commandLine.appendSwitch('--disable-http-cache')
+
+require('electron-reload')(
+  `${__dirname}/renderer`,
+  { electron: `${__dirname}/node_modules/.bin/electron` }
+)
 
 const Options = require('./cli/options')
 const options = new Options(process.argv)
 
 let win
+let server
 
 app.on('ready', () => {
   win = new BrowserWindow({ height: 800, width: 600 })
@@ -18,12 +22,17 @@ app.on('ready', () => {
   win.on('closed', () => { win = null })
 
   win.webContents.on('did-finish-load', () => {
-    const server = net.createServer((socket) => {
-      readline.createInterface({ input: socket }).on('line', (line) => {
+    if (server) return
+
+    server = net.createServer((socket) => {
+      const socketSession = readline.createInterface({ input: socket })
+      socketSession.on('line', (line) => {
         const message = JSON.parse(line)
         if (options.debug) console.log(message)
         win.webContents.send(message['type'], message)
       })
+
+      socketSession.on('close', () => win.webContents.send('end'))
     })
 
     server.listen(options.port || 0, () => {

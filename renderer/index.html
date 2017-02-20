@@ -1,37 +1,57 @@
 <html>
-  <head>
-    <title>Cucumber</title>
-    <style>
-      body { 
-        background-color: #fff; 
-        color: #333;
-        font-family: sans-serif;
-        margin: 0;
-      }
-      ul {
-        list-style-type: none;
-        padding: 0px;
-        margin: 0px;
-      }
-      li {
-        margin: 5px;
-        padding: 5px;
-        background-color: #efefef;
-        border-radius: 3px;
-      }
-      .failed {
-        color: #fff;
-        background-color: #FF1245;
-      }
-      .passed {
-        color: #fff;
-        background-color: #00A818;
-      }
-    </style>
-  </head>
-  <body>
-    <section id="main">
-    </section>
-  </body>
+<head>
+  <title>Cucumber</title>
+  <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+  body { 
+    background-color: #fff; 
+    color: #333;
+    font-family: sans-serif;
+    margin: 0;
+  }
+  ul {
+    list-style-type: none;
+    padding: 0px;
+    margin: 0px;
+  }
+  li {
+    margin: 5px;
+    padding: 5px;
+    background-color: #efefef;
+    border-radius: 3px;
+  }
+  .failed {
+    color: #fff;
+    background-color: #FF1245;
+  }
+  .passed {
+    color: #fff;
+    background-color: #00A818;
+  }
+  .pending {
+    color: #fff;
+    background-color: #f0ad4e;
+  }
+  #summary, #currentTestCase {
+    padding: 5px;
+  }
+  </style>
+</head>
+<body>
+  <div class="progress" id="progressOfTestRun">
+    <div class="passed progress-bar progress-bar-passed" style="width: 0%;">
+    </div>
+    <div class="skipped progress-bar progress-bar-info" style="width: 0%">
+    </div>
+    <div class="pending progress-bar progress-bar-warning" style="width: 0%">
+    </div>
+    <div class="failed progress-bar progress-bar-danger" style="width: 0%">
+    </div>
+  </div>
+  <div id="summary"></div>
+  <div id="currentTestCase"></div>
+  <section id="main">
+  </section>
+</body>
 </html>
 <script src="index.js"></script>
