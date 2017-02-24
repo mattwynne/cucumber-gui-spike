@@ -4,7 +4,7 @@ const electron = require('electron')
 // const Options = require('../cli/options')
 // const options = new Options(electron.remote.process.argv)
 
-const $ = window.jQuery = require('jquery')
+window.jQuery = require('jquery')
 require('bootstrap')
 
 process.on('unhandledRejection', function (reason) {
@@ -13,7 +13,6 @@ process.on('unhandledRejection', function (reason) {
 })
 
 const setProgress = (bar, states) => {
-  console.log(states)
   Object.keys(states).forEach((status) => {
     bar.getElementsByClassName(status)[0].style.width = `${states[status]}%`
   })
@@ -31,8 +30,11 @@ class State {
 let state = new State()
 
 const render = (state) => {
-  document.getElementById('currentTestCase').innerHTML =
-    state.currentTestCase ? `Running: ${state.currentTestCase.location}` : 'Done'
+  document.getElementById('current-test-case').innerHTML =
+    state.currentTestCase ? `${state.currentTestCase.location}` : 'Done'
+
+  document.getElementById('current-test-step').innerHTML =
+    state.currentTestStep ? `${state.currentTestStep.actionLocation}` : ''
 
   const completedTestCases = state.testCases.filter(testCase => testCase.result)
   const completedTestCasesWithResult = (status) => {
@@ -48,8 +50,14 @@ const render = (state) => {
     }
   )
 
-  document.getElementById('summary').innerHTML = 
+  document.getElementById('test-case-summary').innerHTML =
     `${completedTestCases.length} / ${state.testCases.length} scenarios`
+
+  const allTestSteps = state.testCases.reduce((result, testCase) => result.concat(testCase.testSteps), [])
+  const completedTestSteps = allTestSteps.filter(testStep => testStep.result)
+
+  document.getElementById('test-step-summary').innerHTML =
+    `${completedTestSteps.length} / ${allTestSteps.length} steps`
 }
 
 const resetState = () => {
@@ -74,8 +82,24 @@ events.on('test-run-starting', (event, message) => {
   state.testCases = message['testCases']
 
   const ul = document.createElement('ul')
-  ul.innerHTML = state.testCases.map((testCase) =>
-    `<li x-test-case-location="${testCase.location}">${testCase.location}</li>`).join('')
+  const lis = state.testCases.map(testCase => {
+    const li = document.createElement('li')
+    li.setAttribute('x-test-case-location', testCase.location)
+    const name = document.createElement('h4')
+    name.innerText = testCase.location
+    li.appendChild(name)
+    const steps = testCase.testSteps.map((testStep, index) => {
+      const li = document.createElement('li')
+      li.setAttribute('x-test-step-index', index)
+      li.innerText = testStep.actionLocation
+      return li
+    })
+    const stepsList = document.createElement('ul')
+    steps.forEach(li => stepsList.appendChild(li))
+    li.appendChild(stepsList)
+    return li
+  })
+  lis.forEach(li => ul.appendChild(li))
   document.getElementById('main').appendChild(ul)
 })
 
@@ -84,16 +108,51 @@ events.on('test-case-starting', (event, message) => {
   render(state)
 })
 
+events.on('test-step-starting', (event, message) => {
+  state.currentTestStep = state
+    .getTestCase(message.testCase.location)
+    .testSteps[message.index]
+  render(state)
+})
+
+events.on('test-step-finished', (event, message) => {
+  const testStep = state
+    .getTestCase(message.testCase.location)
+    .testSteps[message.index]
+  testStep.result = message.result
+  render(state)
+
+  const testCaseLi = getTestCase(message.testCase.location)
+  const li = testCaseLi.querySelector(`[x-test-step-index='${message.index}']`)
+  li.className = message.result.status
+  li.innerHTML += ` (${Math.ceil(message.result.duration / 1000000)}ms)`
+
+  if (message.result.exception) {
+    const error = document.createElement('pre')
+    error.className = 'error'
+    error.innerHTML = message.result.exception.message
+    const stackTrace = document.createElement('ul')
+    message.result.exception.stackTrace.forEach(line => {
+      const li = document.createElement('li')
+      li.innerText = line
+      stackTrace.appendChild(li)
+    })
+    error.appendChild(stackTrace)
+    li.appendChild(error)
+  }
+})
+
 events.on('test-case-finished', (event, message) => {
   state.getTestCase(message.location).result = message.result
   render(state)
 
-  const li = getTestCase(message['location'])
-  li.className = message['result']['status']
-  li.innerHTML += ` (${message['result']['duration']})`
+  const h4 = getTestCase(message.location).querySelector('h4')
+  h4.className = message.result.status
+  h4.innerHTML += ` (${Math.ceil(message.result.duration / 1000000)}ms)`
 })
 
 events.on('end', () => {
   state.currentTestCase = null
+  state.currentTestStep = null
   render(state)
 })

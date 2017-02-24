@@ -15,7 +15,7 @@ let win
 let server
 
 app.on('ready', () => {
-  win = new BrowserWindow({ height: 800, width: 600 })
+  win = new BrowserWindow({ height: 800, width: 900 })
   const indexPath = `file://${__dirname}/renderer/index.html`
   win.loadURL(indexPath)
 
@@ -28,7 +28,7 @@ app.on('ready', () => {
       const socketSession = readline.createInterface({ input: socket })
       socketSession.on('line', (line) => {
         const message = JSON.parse(line)
-        if (options.debug) console.log(message)
+        if (options.debug) console.log(JSON.stringify(message, null, 2))
         win.webContents.send(message['type'], message)
       })
 
