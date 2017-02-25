@@ -22,6 +22,7 @@ const setProgress = (bar, states) => {
 class State {
   constructor() {
     this.testCases = []
+    this.gherkinDocs = {}
   }
 
   getTestCase(location) {
@@ -84,8 +85,20 @@ const getTestCase = (location) => {
 
 const events = electron.ipcRenderer
 
+events.on('start', () => state = new State())
+
+require('gherkin')
+const Gherkin = window.Gherkin
+const parser = new Gherkin.Parser(new Gherkin.AstBuilder())
+
+events.on('gherkin-source-read', (event, message) => {
+  state.gherkinDocs[message.path] = {
+    body: message.body,
+    ast: parser.parse(message.body),
+  }
+})
+
 events.on('test-run-starting', (event, message) => {
-  state = new State()
   state.pwd = message.workingDirectory
   state.startTime = message.timestamp * 1000
   render(state)
@@ -109,7 +122,7 @@ events.on('test-run-starting', (event, message) => {
     testCase.testSteps.forEach((testStep, index) => {
       const li = document.createElement('li')
       li.setAttribute('x-test-step-index', index)
-      li.innerText = testStep.actionLocation
+      li.innerHTML = getStepHtml(testStep)
       ul.appendChild(li)
     })
     div.appendChild(ul)
@@ -145,7 +158,7 @@ events.on('test-step-finished', (event, message) => {
   if (message.result.exception) {
     const error = document.createElement('pre')
     error.className = 'alert alert-danger'
-    error.innerHTML = message.result.exception.message
+    error.innerHTML = message.result.exception.message || 'No error message was reported'
     li.appendChild(error)
     const stackTrace = document.createElement('pre')
     stackTrace.innerText = message.result.exception.stackTrace.join('\n')
@@ -183,3 +196,12 @@ const createDurationBadge = (result) => {
   return badge
 }
 
+const getStepHtml = (testStep) => {
+  if (!testStep.sourceLocation)
+    return testStep.actionLocation
+
+  const file = testStep.sourceLocation.split(':')[0]
+  const line = testStep.sourceLocation.split(':')[1]
+  const text = state.gherkinDocs[file].body.split('\n')[line - 1]
+  return `<span title="${testStep.actionLocation}" data-toggle="tooltip" data-placement="right">${text}</span>`
+}
