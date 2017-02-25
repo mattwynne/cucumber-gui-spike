@@ -14,18 +14,17 @@ Graphical User Interface for Cucumber, the BDD and testing tool.
   - [x] resolve the mystery of why some steps that were shown in the test-run-starting event are never sent us as results
 - [x] display step duration
 - [x] show which step is curently running (drives out the test-step-starting event)
-- [ ] display test case failure message and backtrace
+- [x] display test step failure message and backtrace
+- [x] hide things until they're ready to display
 - [ ] display Gherkin source of a test case
   - [ ] send a GherkinSourceRead event
   - [ ] highlight steps from Gherkin source as they're executed
 - [ ] display multiple test runs in different windows
 - [ ] display project name / dir and command used to run the tests
-- [ ] button to re-run the same test again
-- [ ] breakdown count of test cases passed / failed / pending etc
+  - [ ] button to re-run the same test again
 - [ ] resolve confusion about sourceLocation vs actionLocation for test steps (especially hooks)
 - [ ] document new events in a PR for the event protocol with schema, examples etc
-- [ ] add to_json methods to things like Result and Test::Case/Step in core
+- [ ] add to_json methods to things like Result and Test::Case/Step in core?
 - [ ] publish Ruby event-stream formatter / plugin (with tests?)
-- [ ] hide things until they're ready to display
-- [ ] publish the repo and ask for help on the ML
+- [ ] publish the repo and ask for help
 
