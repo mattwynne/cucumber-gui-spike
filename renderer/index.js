@@ -1,10 +1,11 @@
 const electron = require('electron')
+const moment = require('moment')
 
 // const Chart = require('chart.js')
 // const Options = require('../cli/options')
 // const options = new Options(electron.remote.process.argv)
 
-window.jQuery = require('jquery')
+const $ = window.jQuery = require('jquery')
 require('bootstrap')
 
 process.on('unhandledRejection', function (reason) {
@@ -30,13 +31,27 @@ class State {
 let state = new State()
 
 const render = (state) => {
+  $('.status-waiting').hide()
+  $('.status-started').show()
+
+  document.getElementsByClassName('pwd')[0].innerText = state.pwd
+  document.getElementsByClassName('start-time')[0].innerText = moment(state.startTime).format('h:mm:ss a on MMMM Do YYYY')
+
+  if (!state.currentTestCase) {
+    $('.status-done').show()
+    $('.status-running').hide()
+  } else {
+    $('.status-done').hide()
+    $('.status-running').show()
+  }
   document.getElementById('current-test-case').innerHTML =
-    state.currentTestCase ? `${state.currentTestCase.location}` : 'Done'
+    state.currentTestCase && `${state.currentTestCase.location}`
 
   document.getElementById('current-test-step').innerHTML =
-    state.currentTestStep ? `${state.currentTestStep.actionLocation}` : ''
+    state.currentTestStep && `${state.currentTestStep.actionLocation}`
 
   const completedTestCases = state.testCases.filter(testCase => testCase.result)
+  $('.test-cases-finished-count').text(completedTestCases.length)
   const completedTestCasesWithResult = (status) => {
     return completedTestCases.filter(testCase => testCase.result.status == status)
   }
@@ -50,14 +65,9 @@ const render = (state) => {
     }
   )
 
-  document.getElementById('test-case-summary').innerHTML =
-    `${completedTestCases.length} / ${state.testCases.length} scenarios`
-
   const allTestSteps = state.testCases.reduce((result, testCase) => result.concat(testCase.testSteps), [])
   const completedTestSteps = allTestSteps.filter(testStep => testStep.result)
-
-  document.getElementById('test-step-summary').innerHTML =
-    `${completedTestSteps.length} / ${allTestSteps.length} steps`
+  $('.test-steps-finished-count').text(completedTestSteps.length)
 }
 
 const resetState = () => {
@@ -76,31 +86,36 @@ const events = electron.ipcRenderer
 
 events.on('test-run-starting', (event, message) => {
   state = new State()
+  state.pwd = message.workingDirectory
+  state.startTime = message.timestamp * 1000
   render(state)
+
   resetState()
+  state.testCases = message.testCases
 
-  state.testCases = message['testCases']
+  state.testCases.forEach(testCase => {
+    const div = document.createElement('div')
 
-  const ul = document.createElement('ul')
-  const lis = state.testCases.map(testCase => {
-    const li = document.createElement('li')
-    li.setAttribute('x-test-case-location', testCase.location)
-    const name = document.createElement('h4')
-    name.innerText = testCase.location
-    li.appendChild(name)
-    const steps = testCase.testSteps.map((testStep, index) => {
+    div.setAttribute('x-test-case-location', testCase.location)
+    const h2 = document.createElement('h2')
+    h2.innerText = testCase.location
+    div.appendChild(h2)
+
+    const p = document.createElement('p')
+    p.innerText = `This scenario has ${testCase.testSteps.length} steps:`
+    div.appendChild(p)
+
+    const ul = document.createElement('ul')
+    testCase.testSteps.forEach((testStep, index) => {
       const li = document.createElement('li')
       li.setAttribute('x-test-step-index', index)
       li.innerText = testStep.actionLocation
-      return li
+      ul.appendChild(li)
     })
-    const stepsList = document.createElement('ul')
-    steps.forEach(li => stepsList.appendChild(li))
-    li.appendChild(stepsList)
-    return li
+    div.appendChild(ul)
+
+    document.getElementById('main').appendChild(div)
   })
-  lis.forEach(li => ul.appendChild(li))
-  document.getElementById('main').appendChild(ul)
 })
 
 events.on('test-case-starting', (event, message) => {
@@ -122,23 +137,19 @@ events.on('test-step-finished', (event, message) => {
   testStep.result = message.result
   render(state)
 
-  const testCaseLi = getTestCase(message.testCase.location)
-  const li = testCaseLi.querySelector(`[x-test-step-index='${message.index}']`)
-  li.className = message.result.status
-  li.innerHTML += ` (${Math.ceil(message.result.duration / 1000000)}ms)`
+  const div = getTestCase(message.testCase.location)
+  const li = div.querySelector(`[x-test-step-index='${message.index}']`)
+  li.appendChild(createResultBadge(message.result))
+  li.appendChild(createDurationBadge(message.result))
 
   if (message.result.exception) {
     const error = document.createElement('pre')
-    error.className = 'error'
+    error.className = 'alert alert-danger'
     error.innerHTML = message.result.exception.message
-    const stackTrace = document.createElement('ul')
-    message.result.exception.stackTrace.forEach(line => {
-      const li = document.createElement('li')
-      li.innerText = line
-      stackTrace.appendChild(li)
-    })
-    error.appendChild(stackTrace)
     li.appendChild(error)
+    const stackTrace = document.createElement('pre')
+    stackTrace.innerText = message.result.exception.stackTrace.join('\n')
+    li.appendChild(stackTrace)
   }
 })
 
@@ -146,9 +157,10 @@ events.on('test-case-finished', (event, message) => {
   state.getTestCase(message.location).result = message.result
   render(state)
 
-  const h4 = getTestCase(message.location).querySelector('h4')
-  h4.className = message.result.status
-  h4.innerHTML += ` (${Math.ceil(message.result.duration / 1000000)}ms)`
+  const div = getTestCase(message.location)
+  const h2 = div.querySelector('h2')
+  h2.appendChild(createResultBadge(message.result))
+  h2.appendChild(createDurationBadge(message.result))
 })
 
 events.on('end', () => {
@@ -156,3 +168,18 @@ events.on('end', () => {
   state.currentTestStep = null
   render(state)
 })
+
+const createResultBadge = (result) => {
+  const badge = document.createElement('span')
+  badge.className = `badge ${result.status}`
+  badge.innerText = result.status
+  return badge
+}
+
+const createDurationBadge = (result) => {
+  const badge = document.createElement('span')
+  badge.className = 'badge'
+  badge.innerText = `${Math.ceil(result.duration / 1000000)}ms`
+  return badge
+}
+
