@@ -2,6 +2,9 @@
 
 Graphical User Interface for Cucumber, the BDD and testing tool.
 
+You can test this using the `event-stream-2` branch of Cucumber-Ruby, using this command:
+
+    cucumber features/docs/ --format Cucumber::Formatter::EventStream,port=9000 --out dev/null --format progress
 
 ## TODO
 
@@ -24,21 +27,23 @@ Graphical User Interface for Cucumber, the BDD and testing tool.
 - [ ] protocol version
 - [ ] display image / video attachments
 - [ ] publish Ruby event-stream formatter / plugin (with tests?)
-
-### Additional features
-
-- [ ] display multiple test runs in different windows
-- [ ] display project name and command used to run the tests
-  - [ ] button to re-run the same test again
 - [ ] document new events in a PR for the event protocol with schema, examples etc
-- [ ] add to_json methods to things like Result and Test::Case/Step in core?
-- [ ] publish the repo and ask for help
 
 ### Habitability
 
 - [x] live reload for easier development
 - [x] install bootstrap for better styling
   - [x] use bootstrap progress bar
+- [ ] add to_json methods to things like Result and Test::Case/Step in cucumber-ruby-core
+- [ ] publish the repo and ask for help
 - [ ] add tests
 - [ ] use react / redux for rendering
 - [ ] replace bootstrap / jquery with something lighter
+
+### Ideas for additional features
+
+- [ ] display multiple test runs (series) in different windows
+  - [ ] group by project
+- [ ] display project name and command used to run the tests
+  - [ ] button to re-run the same test again
+
