@@ -16,9 +16,9 @@ Graphical User Interface for Cucumber, the BDD and testing tool.
 - [x] hide things until they're ready to display
 - [x] display working directory
 - [x] display start time
-- [ ] display Gherkin source of a test case
-  - [ ] send a GherkinSourceRead event
-  - [ ] highlight steps from Gherkin source as they're executed
+- [x] display Gherkin source of a test case
+  - [x] send a GherkinSourceRead event
+  - [x] highlight steps from Gherkin source as they're executed
 - [ ] display unused step definitions
 - [ ] resolve confusion about sourceLocation vs actionLocation for test steps (especially hooks)
 - [ ] protocol version
