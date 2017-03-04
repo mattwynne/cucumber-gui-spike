@@ -2,7 +2,9 @@
 
 Graphical User Interface for Cucumber, the BDD and testing tool.
 
-You can test this using the `event-stream-2` branch of Cucumber-Ruby, using this command:
+Start it with `yarn start`
+
+You can test this using the `event-stream-3` branch of Cucumber-Ruby, using this command:
 
     cucumber features/docs/ --format Cucumber::Formatter::EventStream,port=9000 --out dev/null --format progress
 

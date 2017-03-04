@@ -3,13 +3,10 @@
   "version": "1.0.0",
   "description": "Graphical User Interface for Cucumber",
   "main": "main.js",
-  "bin": {
-    "cucumber-gui": "./bin/cucumber-gui"
-  },
   "scripts": {
     "test": "npm run eslint",
     "eslint": "eslint '**/*.js' --ignore 'node_modules/**/*.js'",
-    "start": "./bin/cucumber-gui --port 9000"
+    "start": "electron . --port 9000 --debug"
   },
   "author": "Matt Wynne <matt@cucumber.io>",
   "license": "MIT",
