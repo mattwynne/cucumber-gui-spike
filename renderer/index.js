@@ -48,10 +48,10 @@ const render = (state) => {
     $('.status-running').show()
   }
   document.getElementById('current-test-case').innerHTML =
-    state.currentTestCase && `${state.currentTestCase.location}`
+    state.currentTestCase && `${state.currentTestCase.uri}:${state.currentTestCase.locations[0].line}`
 
   document.getElementById('current-test-step').innerHTML =
-    state.currentTestStep && `${state.currentTestStep.actionLocation}`
+    state.currentTestStep && `${state.currentTestStep.locations[0].uri || state.currentTestCase.uri}:${state.currentTestStep.locations[0].line}`
 
   const completedTestCases = state.testCases.filter(testCase => testCase.result)
   $('.test-cases-finished-count').text(completedTestCases.length)
@@ -68,8 +68,8 @@ const render = (state) => {
     }
   )
 
-  const allTestSteps = state.testCases.reduce((result, testCase) => result.concat(testCase.testSteps), [])
-  const completedTestSteps = allTestSteps.filter(testStep => testStep.result)
+  const allTestSteps = state.testCases.reduce((result, testCase) => result.concat(testCase.steps), [])
+  const completedTestSteps = allTestSteps.filter(step => step.result)
   $('.test-steps-finished-count').text(completedTestSteps.length)
 }
 
@@ -81,14 +81,20 @@ const resetState = () => {
   )
 }
 
-const getTestCase = (location) => {
+const getTestCaseDiv = (location) => {
   return document.querySelector(`[x-test-case-location='${location}']`)
 }
 
 const events = electron.ipcRenderer
 
 //   state.pwd = message.workingDirectory
-events.on('start', () => state = new State())
+events.on('start', () => {
+  state = new State()
+  state.startTime = new Date()
+  render(state)
+
+  resetState()
+})
 
 require('gherkin')
 const Gherkin = window.Gherkin
@@ -102,10 +108,6 @@ events.on('source', (event, message) => {
 })
 
 events.on('pickle', (event, message) => {
-  state.startTime = message.timestamp * 1000
-  render(state)
-
-  resetState()
   message.pickle.uri = message.uri
   state.testCases.push(message.pickle)
   const location = `${message.pickle.locations[0].uri || message.uri}:${message.pickle.locations[0].line}`
@@ -158,7 +160,7 @@ events.on('test-step-finished', (event, message) => {
   testStep.result = message.result
   render(state)
 
-  const div = getTestCase(message.testCase.location)
+  const div = getTestCaseDiv(message.testCase.location)
   const li = div.querySelector(`[x-test-step-index='${message.index}']`)
   li.appendChild(createResultBadge(message.result))
   li.appendChild(createDurationBadge(message.result))
@@ -175,10 +177,10 @@ events.on('test-step-finished', (event, message) => {
 })
 
 events.on('test-case-finished', (event, message) => {
-  state.getTestCase(message.location).result = message.result
+  state.getTestCase(getLocationFromString(message.location)).result = message.result
   render(state)
 
-  const div = getTestCase(message.location)
+  const div = getTestCaseDiv(message.location)
   const h2 = div.querySelector('h2')
   h2.appendChild(createResultBadge(message.result))
   h2.appendChild(createDurationBadge(message.result))
@@ -209,7 +211,6 @@ const getStepHtml = (step, uri) => {
     return `${step.locations[0].uri}:${step.locations[0].line}`
 
   const line = step.locations[0].line
-  console.log(uri)
   const text = state.gherkinDocs[uri].body.split('\n')[line - 1]
   return `<span title="${step.locations[1].uri}:${step.locations[1].line}" data-toggle="tooltip" data-placement="right">${text}</span>`
 }
