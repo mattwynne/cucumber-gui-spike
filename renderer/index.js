@@ -1,5 +1,6 @@
 const electron = require('electron')
 const moment = require('moment')
+const path = require('path')
 
 // const Chart = require('chart.js')
 // const Options = require('../cli/options')
@@ -34,11 +35,15 @@ class State {
 let state = new State()
 
 const render = (state) => {
+  const projectName = path.basename(state.pwd)
+  const startTime = moment(state.startTime).format('h:mm:ss a on MMMM Do YYYY')
+  document.title = `Cucumber - ${projectName} (${startTime})`
+  
   $('.status-waiting').hide()
   $('.status-started').show()
 
   document.getElementsByClassName('pwd')[0].innerText = state.pwd
-  document.getElementsByClassName('start-time')[0].innerText = moment(state.startTime).format('h:mm:ss a on MMMM Do YYYY')
+  document.getElementsByClassName('start-time')[0].innerText = startTime
 
   if (!state.currentTestCase) {
     $('.status-done').show()
@@ -87,10 +92,11 @@ const getTestCaseDiv = (location) => {
 
 const events = electron.ipcRenderer
 
-//   state.pwd = message.workingDirectory
-events.on('start', () => {
+events.on('start', (event, message) => {
   state = new State()
-  state.startTime = new Date()
+  state.startTime = message.timestamp * 1000 || new Date()
+  state.pwd = message.workingDirectory || 'unknown'
+
   render(state)
 
   resetState()
