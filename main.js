@@ -15,8 +15,6 @@ const options = new Options(process.argv)
 let server
 
 app.on('ready', () => {
-  if (server) return
-
   server = net.createServer((socket) => {
     let win = new BrowserWindow({ height: 800, width: 900 })
     const indexPath = `file://${__dirname}/renderer/index.html`
