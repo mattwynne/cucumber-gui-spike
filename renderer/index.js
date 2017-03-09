@@ -26,7 +26,9 @@ class State {
   }
 
   getTestCase(location) {
-    return this.testCases.find(testCase => testCase.location == location)
+    return this.testCases.find(
+      testCase => (testCase.uri == location.uri && testCase.locations[0].line == location.line)
+    )
   }
 }
 let state = new State()
@@ -85,68 +87,74 @@ const getTestCase = (location) => {
 
 const events = electron.ipcRenderer
 
+//   state.pwd = message.workingDirectory
 events.on('start', () => state = new State())
 
 require('gherkin')
 const Gherkin = window.Gherkin
 const parser = new Gherkin.Parser(new Gherkin.AstBuilder())
 
-events.on('gherkin-source-read', (event, message) => {
-  state.gherkinDocs[message.path] = {
-    body: message.body,
-    ast: parser.parse(message.body),
+events.on('source', (event, message) => {
+  state.gherkinDocs[message.uri] = {
+    body: message.data,
+    ast: parser.parse(message.data),
   }
 })
 
-events.on('test-run-starting', (event, message) => {
-  state.pwd = message.workingDirectory
+events.on('pickle', (event, message) => {
   state.startTime = message.timestamp * 1000
   render(state)
 
   resetState()
-  state.testCases = message.testCases
+  message.pickle.uri = message.uri
+  state.testCases.push(message.pickle)
+  const location = `${message.pickle.locations[0].uri || message.uri}:${message.pickle.locations[0].line}`
 
-  state.testCases.forEach(testCase => {
-    const div = document.createElement('div')
+  const div = document.createElement('div')
 
-    div.setAttribute('x-test-case-location', testCase.location)
-    const h2 = document.createElement('h2')
-    h2.innerText = testCase.location
-    div.appendChild(h2)
+  div.setAttribute('x-test-case-location', location)
+  const h2 = document.createElement('h2')
+  h2.innerText = location
+  div.appendChild(h2)
 
-    const p = document.createElement('p')
-    p.innerText = `This scenario has ${testCase.testSteps.length} steps:`
-    div.appendChild(p)
+  const p = document.createElement('p')
+  p.innerText = `This scenario has ${message.pickle.steps.length} steps:`
+  div.appendChild(p)
 
-    const ul = document.createElement('ul')
-    testCase.testSteps.forEach((testStep, index) => {
-      const li = document.createElement('li')
-      li.setAttribute('x-test-step-index', index)
-      li.innerHTML = getStepHtml(testStep)
-      ul.appendChild(li)
-    })
-    div.appendChild(ul)
-
-    document.getElementById('main').appendChild(div)
+  const ul = document.createElement('ul')
+  message.pickle.steps.forEach((step, index) => {
+    const li = document.createElement('li')
+    li.setAttribute('x-test-step-index', index)
+    li.innerHTML = getStepHtml(step, message.uri)
+    ul.appendChild(li)
   })
+  div.appendChild(ul)
+
+  document.getElementById('main').appendChild(div)
+})
+
+const getLocationFromString = (locationString => {
+  const uri = locationString.split(':')[0]
+  const line = locationString.split(':')[1]
+  return { uri, line }
 })
 
 events.on('test-case-starting', (event, message) => {
-  state.currentTestCase = state.getTestCase(message.location)
+  state.currentTestCase = state.getTestCase(getLocationFromString(message.location))
   render(state)
 })
 
 events.on('test-step-starting', (event, message) => {
   state.currentTestStep = state
-    .getTestCase(message.testCase.location)
-    .testSteps[message.index]
+    .getTestCase(getLocationFromString(message.testCase.location))
+    .steps[message.index]
   render(state)
 })
 
 events.on('test-step-finished', (event, message) => {
   const testStep = state
-    .getTestCase(message.testCase.location)
-    .testSteps[message.index]
+    .getTestCase(getLocationFromString(message.testCase.location))
+    .steps[message.index]
   testStep.result = message.result
   render(state)
 
@@ -196,12 +204,12 @@ const createDurationBadge = (result) => {
   return badge
 }
 
-const getStepHtml = (testStep) => {
-  if (!testStep.sourceLocation)
-    return testStep.actionLocation
+const getStepHtml = (step, uri) => {
+  if (step.locations[0].uri)
+    return `${step.locations[0].uri}:${step.locations[0].line}`
 
-  const file = testStep.sourceLocation.split(':')[0]
-  const line = testStep.sourceLocation.split(':')[1]
-  const text = state.gherkinDocs[file].body.split('\n')[line - 1]
-  return `<span title="${testStep.actionLocation}" data-toggle="tooltip" data-placement="right">${text}</span>`
+  const line = step.locations[0].line
+  console.log(uri)
+  const text = state.gherkinDocs[uri].body.split('\n')[line - 1]
+  return `<span title="${step.locations[1].uri}:${step.locations[1].line}" data-toggle="tooltip" data-placement="right">${text}</span>`
 }
