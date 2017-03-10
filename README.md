@@ -8,7 +8,9 @@ You can test this using the `event-stream-3` branch of Cucumber-Ruby, using this
 
     cucumber features/docs/ --format Cucumber::Formatter::EventStream,port=9000 --out dev/null --format progress
 
-[Watch a demo video](https://cucumber.wistia.com/medias/hpf9qboi31)
+## Demo
+
+[![Preview video](https://embed-ssl.wistia.com/deliveries/7bfcf5b0af9056385d1bf961194b17a9dee35580.jpg?image_crop_resized=400x225&image_play_button=true&image_play_button_color=D5D5D5CC)](https://cucumber.wistia.com/medias/hpf9qboi31)
 
 ## TODO
 
@@ -39,9 +41,9 @@ You can test this using the `event-stream-3` branch of Cucumber-Ruby, using this
 - [x] install bootstrap for better styling
   - [x] use bootstrap progress bar
 - [ ] add to_json methods to things like Result and Test::Case/Step in cucumber-ruby-core
-- [ ] publish the repo and ask for help
+- [ ] publish the repo in cucumber/cucumber and ask for help
 - [ ] add tests
-- [ ] use react / redux for rendering
+- [ ] rewrite using react / redux for rendering
 - [ ] replace bootstrap / jquery with something lighter
 
 ### Ideas for additional features
@@ -50,4 +52,3 @@ You can test this using the `event-stream-3` branch of Cucumber-Ruby, using this
   - [ ] group by project
 - [ ] display project name and command used to run the tests
   - [ ] button to re-run the same test again
-
