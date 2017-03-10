@@ -1,6 +1,6 @@
-# cucumber-gui
+# cucumber-gui (spike)
 
-Graphical User Interface for Cucumber, the BDD and testing tool.
+A prototype Graphical User Interface for Cucumber, the BDD and testing tool.
 
 Start it with `yarn start`
 
