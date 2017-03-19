@@ -26,8 +26,11 @@ class State {
     this.gherkinDocs = {}
   }
 
-  getTestCase(id) {
-    return this.testCases.find(testCase => (testCase.id.uri == id.uri && testCase.id.line == id.line))
+  getTestCase(sourceLocation) {
+    return this.testCases.find(testCase => (
+      testCase.sourceLocation.uri == sourceLocation.uri &&
+      testCase.sourceLocation.line == sourceLocation.line
+    ))
   }
 }
 let state = new State()
@@ -119,21 +122,21 @@ events.on('test-case', (event, testCase) => {
 })
 
 events.on('test-case-started', (event, message) => {
-  state.currentTestCase = state.getTestCase(message.id)
+  state.currentTestCase = state.getTestCase(message.sourceLocation)
   render(state)
 })
 
 events.on('test-step-started', (event, message) => {
   state.currentTestStep = state
-    .getTestCase(message.id.testCaseId)
-    .steps[message.id.index]
+    .getTestCase(message.testCase.sourceLocation)
+    .steps[message.index]
   render(state)
 })
 
 events.on('test-step-finished', (event, message) => {
   const testStep = state
-    .getTestCase(message.id.testCaseId)
-    .steps[message.id.index]
+    .getTestCase(message.testCase.sourceLocation)
+    .steps[message.index]
   testStep.result = message.result
   render(state)
 
@@ -153,10 +156,10 @@ events.on('test-step-finished', (event, message) => {
 })
 
 events.on('test-case-finished', (event, message) => {
-  state.getTestCase(message.id).result = message.result
+  state.getTestCase(message.sourceLocation).result = message.result
   render(state)
 
-  const div = getTestCaseDiv(message.id)
+  const div = getTestCaseDiv(message.sourceLocation)
   const h2 = div.querySelector('h2')
   h2.appendChild(createResultBadge(message.result))
   h2.appendChild(createDurationBadge(message.result))
@@ -195,6 +198,6 @@ const locationToString = (location) => `${location.uri}:${location.line}`
 
 const isHook = (step) => !state.gherkinDocs[step.sourceLocation.uri]
 
-const getTestCaseDiv = (testCaseId) => {
-  return state.getTestCase(testCaseId).div
+const getTestCaseDiv = (sourceLocation) => {
+  return state.getTestCase(sourceLocation).div
 }
